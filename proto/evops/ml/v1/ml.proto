@@ -1,0 +1,16 @@
+syntax = "proto3";
+package evops.ml.v1;
+
+service MlService {
+  rpc Ask(MlServiceAskRequest) returns (MlServiceAskResponse);
+}
+
+message MlServiceAskRequest {
+  string name = 1;
+  string description = 2;
+}
+
+message MlServiceAskResponse {
+  string name = 1;
+  string description = 2;
+}
