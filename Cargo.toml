@@ -1,16 +1,14 @@
 [workspace]
 resolver = "3"
 members = ["crates/*/"]
-exclude = ["evops-client-ext/"]
+exclude = ["client-ext/"]
 
 [workspace.dependencies]
 # Local
 evops-db = { path = "crates/evops-db/" }
-evops-db-ml = { path = "crates/evops-db-ml/" }
-evops-db-backend = { path = "crates/evops-db-backend/" }
 
 # Client Extension
-evops-models-serv = { package = "evops-models", path = "evops-client-ext/crates/evops-models/" }
+evops-models = { package = "evops-models", path = "client-ext/crates/evops-models/" }
 
 # External
 aide = "0.15.0"
