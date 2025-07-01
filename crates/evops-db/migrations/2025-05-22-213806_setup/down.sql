@@ -1,14 +1,14 @@
-DROP INDEX idx_tags_id;
+DROP INDEX event_id_idx;
 
-DROP INDEX idx_events_id;
+DROP INDEX tag_id_idx;
 
-DROP TABLE events_tags;
+DROP TABLE events_to_tags;
 
-DROP TABLE images;
+DROP TABLE tag_aliases;
+
+DROP TABLE event_images;
 
 DROP TABLE events;
-
-DROP TABLE tags_aliases;
 
 DROP TABLE tags;
 

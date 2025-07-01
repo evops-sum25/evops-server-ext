@@ -11,6 +11,7 @@ diesel = { workspace = true, features = ["chrono", "postgres", "uuid"] }
 diesel-async = { workspace = true, features = ["postgres"] }
 diesel_migrations = { workspace = true }
 itertools = { workspace = true }
+tap = { workspace = true }
 tracing = { workspace = true }
 url = { workspace = true }
 uuid = { workspace = true, features = ["v7"] }

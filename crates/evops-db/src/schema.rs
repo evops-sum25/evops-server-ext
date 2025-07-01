@@ -1,6 +1,14 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    event_images (id) {
+        id -> Uuid,
+        event_id -> Uuid,
+        position -> Int2,
+    }
+}
+
+diesel::table! {
     events (id) {
         id -> Uuid,
         title -> Text,
@@ -13,17 +21,16 @@ diesel::table! {
 }
 
 diesel::table! {
-    events_tags (event_id, tag_id) {
+    events_to_tags (event_id, tag_id) {
         event_id -> Uuid,
         tag_id -> Uuid,
     }
 }
 
 diesel::table! {
-    images (id) {
-        id -> Uuid,
-        url -> Text,
-        event_id -> Uuid,
+    tag_aliases (tag_id, alias) {
+        tag_id -> Uuid,
+        alias -> Text,
     }
 }
 
@@ -35,30 +42,23 @@ diesel::table! {
 }
 
 diesel::table! {
-    tags_aliases (tag_id, alias) {
-        tag_id -> Uuid,
-        alias -> Text,
-    }
-}
-
-diesel::table! {
     users (id) {
         id -> Uuid,
         name -> Text,
     }
 }
 
+diesel::joinable!(event_images -> events (event_id));
 diesel::joinable!(events -> users (author_id));
-diesel::joinable!(events_tags -> events (event_id));
-diesel::joinable!(events_tags -> tags (tag_id));
-diesel::joinable!(images -> events (event_id));
-diesel::joinable!(tags_aliases -> tags (tag_id));
+diesel::joinable!(events_to_tags -> events (event_id));
+diesel::joinable!(events_to_tags -> tags (tag_id));
+diesel::joinable!(tag_aliases -> tags (tag_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    event_images,
     events,
-    events_tags,
-    images,
+    events_to_tags,
+    tag_aliases,
     tags,
-    tags_aliases,
     users,
 );
