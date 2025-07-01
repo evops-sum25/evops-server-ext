@@ -8,7 +8,7 @@ exclude = ["client-ext/"]
 evops-db = { path = "crates/evops-db/" }
 
 # Client Extension
-evops-models = { package = "evops-models", path = "client-ext/crates/evops-models/" }
+evops-models = { path = "client-ext/crates/evops-models/" }
 
 # External
 aide = "0.15.0"
