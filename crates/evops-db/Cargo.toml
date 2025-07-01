@@ -3,7 +3,7 @@ name = "evops-db"
 edition = "2024"
 
 [dependencies]
-evops-models = { workspace = true }
+evops-models-serv = { workspace = true }
 
 chrono = { workspace = true }
 eyre = { workspace = true }
