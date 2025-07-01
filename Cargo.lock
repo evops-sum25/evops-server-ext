@@ -337,36 +337,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "evops-db-backend"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "diesel_migrations",
- "eyre",
- "itertools",
- "tracing",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "evops-db-ml"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "diesel_migrations",
- "eyre",
- "itertools",
- "tracing",
- "url",
- "uuid",
-]
-
-[[package]]
 name = "evops-models"
 version = "0.0.0"
 dependencies = [
