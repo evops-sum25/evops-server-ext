@@ -1,0 +1,3 @@
+[submodule "evops-client-ext"]
+	path = evops-client-ext
+	url = https://github.com/evops-sum25/evops-client-ext
