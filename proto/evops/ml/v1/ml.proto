@@ -2,15 +2,13 @@ syntax = "proto3";
 package evops.ml.v1;
 
 service MlService {
-  rpc Ask(MlServiceAskRequest) returns (MlServiceAskResponse);
+  rpc GetTags(MlServiceGetTagsRequest) returns (MlServiceGetTagsResponse);
 }
 
-message MlServiceAskRequest {
-  string name = 1;
-  string description = 2;
+message MlServiceGetTagsRequest {
+  string description = 1;
 }
 
-message MlServiceAskResponse {
-  string name = 1;
-  string description = 2;
+message MlServiceGetTagsResponse {
+  repeated string tagsIds = 2;
 }
