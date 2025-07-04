@@ -1,0 +1,88 @@
+use chrono::Utc;
+use diesel::QueryDsl as _;
+use diesel::result::{DatabaseErrorKind, OptionalExtension as _};
+use diesel::{ExpressionMethods, Insertable};
+use diesel_async::scoped_futures::ScopedFutureExt as _;
+use diesel_async::{AsyncConnection as _, AsyncPgConnection, RunQueryDsl as _};
+use tap::TryConv as _;
+use uuid::Uuid;
+
+use evops_models::{ApiError, ApiResult};
+
+use crate::schema;
+
+#[derive(Insertable)]
+#[diesel(table_name = schema::event_images)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+struct NewEventImage {
+    pub id: Uuid,
+    pub event_id: Uuid,
+    pub position: i16,
+}
+
+impl crate::Database {
+    pub async fn reserve_image(
+        &mut self,
+        event_id: evops_models::EventId,
+    ) -> ApiResult<evops_models::EventImageId> {
+        self.conn
+            .transaction(|conn| {
+                async { unsafe { Self::reserve_image_unatomic(conn, event_id).await } }
+                    .scope_boxed()
+            })
+            .await
+    }
+
+    async unsafe fn reserve_image_unatomic(
+        conn: &mut AsyncPgConnection,
+        event_id: evops_models::EventId,
+    ) -> ApiResult<evops_models::EventImageId> {
+        let id = evops_models::EventImageId::new(Uuid::now_v7());
+
+        let position = {
+            let current_last_position: i16 = {
+                schema::event_images::table
+                    .select(schema::event_images::position)
+                    .filter(schema::event_images::event_id.eq(event_id.into_inner()))
+                    .order(schema::event_images::position.desc())
+                    .first(conn)
+                    .await
+                    .optional()?
+                    .unwrap_or_default()
+            };
+            current_last_position + 1
+        };
+        #[allow(clippy::missing_panics_doc)]
+        let max_position = evops_models::EVENT_MAX_IMAGES.try_conv::<i16>().unwrap();
+        if position == max_position {
+            return Err(ApiError::AlreadyExists(format!(
+                "Event {event_id} already has {} images.",
+                evops_models::EVENT_MAX_IMAGES,
+            )));
+        }
+
+        diesel::insert_into(schema::event_images::table)
+            .values(self::NewEventImage {
+                id: id.into_inner(),
+                event_id: event_id.into_inner(),
+                position,
+            })
+            .execute(conn)
+            .await
+            .map_err(|e| match e {
+                diesel::result::Error::DatabaseError(DatabaseErrorKind::UniqueViolation, info) => {
+                    ApiError::AlreadyExists(info.message().to_owned())
+                }
+                _ => e.into(),
+            })?;
+
+        let now = Utc::now();
+        diesel::update(schema::events::table)
+            .filter(schema::events::id.eq(event_id.into_inner()))
+            .set(schema::events::modified_at.eq(now))
+            .execute(conn)
+            .await?;
+
+        Ok(id)
+    }
+}

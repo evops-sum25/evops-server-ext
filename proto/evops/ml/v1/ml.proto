@@ -10,5 +10,5 @@ message MlServiceGetTagsRequest {
 }
 
 message MlServiceGetTagsResponse {
-  repeated string tagsIds = 2;
+  repeated string tag_ids = 1;
 }

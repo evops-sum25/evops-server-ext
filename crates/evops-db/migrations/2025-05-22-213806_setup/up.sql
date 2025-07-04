@@ -8,9 +8,9 @@ CREATE TABLE tags (
     name text UNIQUE NOT NULL
 );
 
-CREATE INDEX idx_tags_id ON tags (id);
+CREATE INDEX tag_id_idx ON tags (id);
 
-CREATE TABLE tags_aliases (
+CREATE TABLE tag_aliases (
     tag_id uuid REFERENCES tags (id),
     alias text,
     PRIMARY KEY (tag_id, alias)
@@ -26,17 +26,17 @@ CREATE TABLE events (
     modified_at timestamptz NOT NULL
 );
 
-CREATE INDEX idx_events_id ON events (id);
+CREATE INDEX event_id_idx ON events (id);
 
-CREATE TABLE images (
+CREATE TABLE event_images (
     id uuid PRIMARY KEY,
-    url text NOT NULL,
-    event_id uuid NOT NULL REFERENCES events (id)
+    event_id uuid NOT NULL REFERENCES events (id) ON DELETE CASCADE,
+    position smallint NOT NULL,
+    UNIQUE (event_id, position)
 );
 
-CREATE TABLE events_tags (
+CREATE TABLE events_to_tags (
     event_id uuid REFERENCES events (id),
     tag_id uuid REFERENCES tags (id),
     PRIMARY KEY (event_id, tag_id)
 );
-

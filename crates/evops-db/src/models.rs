@@ -22,7 +22,7 @@ pub struct Tag {
 }
 
 #[derive(Queryable, Selectable, Identifiable, Associations)]
-#[diesel(table_name = schema::tags_aliases)]
+#[diesel(table_name = schema::tag_aliases)]
 #[diesel(belongs_to(Tag))]
 #[diesel(primary_key(tag_id, alias))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -46,22 +46,22 @@ pub struct Event {
 }
 
 #[derive(Queryable, Selectable, Identifiable, Associations)]
-#[diesel(table_name = schema::images)]
+#[diesel(table_name = schema::event_images)]
 #[diesel(belongs_to(Event))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct Image {
+pub struct EventImage {
     pub id: Uuid,
-    pub url: String,
     pub event_id: Uuid,
+    pub position: i16,
 }
 
 #[derive(Queryable, Selectable, Identifiable, Associations)]
-#[diesel(table_name = schema::events_tags)]
+#[diesel(table_name = schema::events_to_tags)]
 #[diesel(belongs_to(Event))]
 #[diesel(belongs_to(Tag))]
 #[diesel(primary_key(event_id, tag_id))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct EventTag {
+pub struct EventToTag {
     pub event_id: Uuid,
     pub tag_id: Uuid,
 }
