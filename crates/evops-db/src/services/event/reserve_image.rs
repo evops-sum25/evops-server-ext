@@ -28,19 +28,21 @@ impl crate::Database {
 
         let id = evops_models::EventImageId::new(Uuid::now_v7());
 
-        let position: i16 = {
-            schema::event_images::table
-                .select(schema::event_images::position)
-                .filter(schema::event_images::event_id.eq(event_id.into_inner()))
-                .order(schema::event_images::position.desc())
-                .first(&mut self.conn)
-                .await
-                .optional()?
-                .unwrap_or_default()
+        let position = {
+            let current_last_position: i16 = {
+                schema::event_images::table
+                    .select(schema::event_images::position)
+                    .filter(schema::event_images::event_id.eq(event_id.into_inner()))
+                    .order(schema::event_images::position.desc())
+                    .first(&mut self.conn)
+                    .await
+                    .optional()?
+                    .unwrap_or_default()
+            };
+            current_last_position + 1
         };
-
         #[allow(clippy::missing_panics_doc)]
-        let max_position = evops_models::EVENT_MAX_IMAGES.try_conv::<i16>().unwrap() - 1;
+        let max_position = evops_models::EVENT_MAX_IMAGES.try_conv::<i16>().unwrap();
         if position == max_position {
             return Err(ApiError::AlreadyExists(format!(
                 "Event {event_id} already has {} images.",
@@ -52,7 +54,7 @@ impl crate::Database {
             .values(self::NewEventImage {
                 id: id.into_inner(),
                 event_id: event_id.into_inner(),
-                position: 0,
+                position,
             })
             .execute(&mut self.conn)
             .await
