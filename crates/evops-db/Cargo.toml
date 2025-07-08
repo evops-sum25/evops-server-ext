@@ -3,13 +3,12 @@ name = "evops-db"
 edition = "2024"
 
 [dependencies]
-evops-models = { workspace = true }
-
 chrono = { workspace = true }
-eyre = { workspace = true }
 diesel = { workspace = true, features = ["chrono", "postgres", "uuid"] }
-diesel-async = { workspace = true, features = ["postgres"] }
 diesel_migrations = { workspace = true }
+diesel-async = { workspace = true, features = ["postgres"] }
+evops-models = { workspace = true }
+eyre = { workspace = true }
 itertools = { workspace = true }
 tap = { workspace = true }
 tracing = { workspace = true }
