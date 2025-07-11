@@ -1,3 +1,8 @@
+CREATE TABLE languages (
+    id uuid PRIMARY KEY,
+    name text UNIQUE NOT NULL
+);
+
 CREATE TABLE users (
     id uuid PRIMARY KEY,
     name text NOT NULL
@@ -18,9 +23,8 @@ CREATE TABLE tag_aliases (
 
 CREATE TABLE events (
     id uuid PRIMARY KEY,
-    title text NOT NULL,
-    description text NOT NULL,
     author_id uuid NOT NULL REFERENCES users (id),
+    primary_language uuid REFERENCES languages (id),
     with_attendance bool NOT NULL,
     created_at timestamptz NOT NULL,
     modified_at timestamptz NOT NULL
@@ -39,4 +43,12 @@ CREATE TABLE events_to_tags (
     event_id uuid REFERENCES events (id),
     tag_id uuid REFERENCES tags (id),
     PRIMARY KEY (event_id, tag_id)
+);
+
+CREATE TABLE event_translations (
+    event_id uuid REFERENCES events (id),
+    language_id uuid REFERENCES languages (id),
+    PRIMARY KEY (event_id, language_id),
+    title text NOT NULL,
+    description text NOT NULL
 );
