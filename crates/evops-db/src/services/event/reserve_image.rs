@@ -24,10 +24,11 @@ impl crate::Database {
     pub async fn reserve_image(
         &mut self,
         event_id: evops_models::EventId,
-    ) -> ApiResult<evops_models::EventImageId> {
+        image_id: evops_models::EventImageId,
+    ) -> ApiResult<()> {
         self.conn
             .transaction(|conn| {
-                async { unsafe { Self::reserve_image_unatomic(conn, event_id).await } }
+                async { unsafe { Self::reserve_image_unatomic(conn, event_id, image_id).await } }
                     .scope_boxed()
             })
             .await
@@ -36,9 +37,8 @@ impl crate::Database {
     async unsafe fn reserve_image_unatomic(
         conn: &mut AsyncPgConnection,
         event_id: evops_models::EventId,
-    ) -> ApiResult<evops_models::EventImageId> {
-        let id = evops_models::EventImageId::new(Uuid::now_v7());
-
+        image_id: evops_models::EventImageId,
+    ) -> ApiResult<()> {
         let position = {
             let current_last_position: i16 = {
                 schema::event_images::table
@@ -63,7 +63,7 @@ impl crate::Database {
 
         diesel::insert_into(schema::event_images::table)
             .values(self::NewEventImage {
-                id: id.into_inner(),
+                id: image_id.into_inner(),
                 event_id: event_id.into_inner(),
                 position,
             })
@@ -83,6 +83,6 @@ impl crate::Database {
             .execute(conn)
             .await?;
 
-        Ok(id)
+        Ok(())
     }
 }
