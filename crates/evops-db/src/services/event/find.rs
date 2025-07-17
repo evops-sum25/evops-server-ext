@@ -32,7 +32,6 @@ impl crate::Database {
         };
         Ok(event)
     }
-
     pub(crate) async fn find_event_model(
         conn: &mut AsyncPgConnection,
         id: evops_models::EventId,
