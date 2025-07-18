@@ -20,6 +20,7 @@ pub struct User {
 pub struct Tag {
     pub id: Uuid,
     pub name: String,
+    pub owner_id: Option<Uuid>,
 }
 
 #[derive(Queryable, Selectable, Identifiable, Associations)]

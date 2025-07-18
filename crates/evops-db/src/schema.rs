@@ -37,6 +37,7 @@ diesel::table! {
     tags (id) {
         id -> Uuid,
         name -> Text,
+        owner_id -> Nullable<Uuid>,
     }
 }
 
@@ -53,6 +54,7 @@ diesel::joinable!(events -> users (author_id));
 diesel::joinable!(events_to_tags -> events (event_id));
 diesel::joinable!(events_to_tags -> tags (tag_id));
 diesel::joinable!(tag_aliases -> tags (tag_id));
+diesel::joinable!(tags -> users (owner_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     event_images,

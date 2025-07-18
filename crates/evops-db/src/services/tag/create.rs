@@ -15,6 +15,7 @@ use crate::schema;
 struct NewTag<'a> {
     id: Uuid,
     name: &'a str,
+    owner_id: Option<Uuid>,
 }
 
 #[derive(Insertable)]
@@ -47,6 +48,7 @@ impl crate::Database {
             .values(self::NewTag {
                 id: id.into_inner(),
                 name: form.name.as_ref(),
+                owner_id: todo!(),
             })
             .execute(conn)
             .await

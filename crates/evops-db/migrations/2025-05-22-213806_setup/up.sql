@@ -8,7 +8,8 @@ CREATE TABLE users (
 
 CREATE TABLE tags (
     id uuid PRIMARY KEY,
-    name text UNIQUE NOT NULL
+    name text UNIQUE NOT NULL,
+    owner_id uuid REFERENCES users (id)
 );
 
 CREATE INDEX tag_id_idx ON tags (id);
