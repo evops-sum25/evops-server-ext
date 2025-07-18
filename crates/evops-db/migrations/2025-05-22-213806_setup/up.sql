@@ -24,7 +24,6 @@ CREATE TABLE events (
     title text NOT NULL,
     description text NOT NULL,
     author_id uuid NOT NULL REFERENCES users (id),
-    with_attendance bool NOT NULL,
     created_at timestamptz NOT NULL,
     modified_at timestamptz NOT NULL
 );

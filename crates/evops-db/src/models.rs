@@ -41,7 +41,6 @@ pub struct Event {
     pub title: String,
     pub description: String,
     pub author_id: Uuid,
-    pub with_attendance: bool,
     pub created_at: DateTime<Utc>,
     pub modified_at: DateTime<Utc>,
 }

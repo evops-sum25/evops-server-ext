@@ -14,7 +14,6 @@ diesel::table! {
         title -> Text,
         description -> Text,
         author_id -> Uuid,
-        with_attendance -> Bool,
         created_at -> Timestamptz,
         modified_at -> Timestamptz,
     }

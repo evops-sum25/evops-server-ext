@@ -18,10 +18,7 @@ impl crate::Database {
         self.conn
             .transaction(|conn| {
                 async {
-                    if form.description.is_some()
-                        || form.title.is_some()
-                        || form.track_attendance.is_some()
-                    {
+                    if form.description.is_some() || form.title.is_some() {
                         unsafe { Self::update_basic_fields(conn, id, &form) }.await?;
                     }
                     if let Some(tag_ids) = form.tag_ids {
@@ -53,11 +50,7 @@ impl crate::Database {
                         .as_ref()
                         .map(|it| schema::events::title.eq(it.as_ref()))
                 };
-                let track_attendance_eq = {
-                    form.track_attendance
-                        .map(|it| schema::events::with_attendance.eq(it))
-                };
-                (description_eq, title_eq, track_attendance_eq)
+                (description_eq, title_eq)
             })
             .execute(conn)
             .await
