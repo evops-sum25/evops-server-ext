@@ -119,10 +119,8 @@ impl crate::Database {
                             .collect();
                         unsafe { evops_models::EventImageIds::new_unchecked(inner_value) }
                     },
-                    title: unsafe { evops_models::EventTitle::new_unchecked(event.title) },
-                    description: unsafe {
-                        evops_models::EventDescription::new_unchecked(event.description)
-                    },
+                    title: unsafe { evops_models::EventTitle::new_unchecked(todo!()) },
+                    description: unsafe { evops_models::EventDescription::new_unchecked(todo!()) },
                     tags: {
                         let inner_value = tags
                             .remove(&event.id)

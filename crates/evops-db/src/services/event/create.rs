@@ -14,9 +14,10 @@ use crate::schema;
 #[diesel(check_for_backend(diesel::pg::Pg))]
 struct NewEvent<'a> {
     id: Uuid,
-    title: &'a str,
-    description: &'a str,
     author_id: Uuid,
+    primary_language_id: Option<Uuid>,
+    start: Option<DateTime<Utc>>,
+    location_id: Option<Uuid>,
     with_attendance: bool,
     created_at: &'a DateTime<Utc>,
     modified_at: &'a DateTime<Utc>,
@@ -50,22 +51,21 @@ impl crate::Database {
         let event_id = evops_models::EventId::new(Uuid::now_v7());
 
         let now = Utc::now();
-        diesel::insert_into(schema::events::table)
-            .values(self::NewEvent {
-                id: event_id.into_inner(),
-                title: form.title.as_ref(),
-                description: form.description.as_ref(),
-                author_id: form.author_id.into_inner(),
-                with_attendance: form.with_attendance,
-                created_at: &now,
-                modified_at: &now,
-            })
-            .execute(conn)
-            .await
-            .map_err(|e| match e {
-                diesel::result::Error::NotFound => ApiError::NotFound(e.to_string()),
-                _ => e.into(),
-            })?;
+        todo!();
+        // diesel::insert_into(schema::events::table)
+        //     .values(self::NewEvent {
+        //         id: event_id.into_inner(),
+        //         author_id: form.author_id.into_inner(),
+        //         with_attendance: form.with_attendance,
+        //         created_at: &now,
+        //         modified_at: &now,
+        //     })
+        //     .execute(conn)
+        //     .await
+        //     .map_err(|e| match e {
+        //         diesel::result::Error::NotFound => ApiError::NotFound(e.to_string()),
+        //         _ => e.into(),
+        //     })?;
 
         diesel::insert_into(schema::events_to_tags::table)
             .values({

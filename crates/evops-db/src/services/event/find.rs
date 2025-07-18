@@ -16,16 +16,11 @@ impl crate::Database {
         let event_model = Self::find_event_model(&mut self.conn, id).await?;
         let event = evops_models::Event {
             id,
-            author: {
-                self.find_user(evops_models::UserId::new(event_model.author_id))
-                    .await?
-            },
+            author: { self.find_user(evops_models::UserId::new(todo!())).await? },
             image_ids: Self::image_ids_of_event_model_sorted(&mut self.conn, &event_model).await?,
             tags: Self::tags_of_event_model(&mut self.conn, &event_model).await?,
-            title: unsafe { evops_models::EventTitle::new_unchecked(event_model.title) },
-            description: unsafe {
-                evops_models::EventDescription::new_unchecked(event_model.description)
-            },
+            title: unsafe { evops_models::EventTitle::new_unchecked(todo!()) },
+            description: unsafe { evops_models::EventDescription::new_unchecked(todo!()) },
             with_attendance: event_model.with_attendance,
             created_at: event_model.created_at,
             modified_at: event_model.modified_at,
