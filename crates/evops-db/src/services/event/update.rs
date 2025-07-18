@@ -41,30 +41,31 @@ impl crate::Database {
         id: evops_models::EventId,
         form: &evops_models::UpdateEventForm,
     ) -> ApiResult<()> {
-        diesel::update(schema::events::table.find(id.into_inner()))
-            .set({
-                let description_eq = {
-                    form.description
-                        .as_ref()
-                        .map(|it| schema::events::description.eq(it.as_ref()))
-                };
-                let title_eq = {
-                    form.title
-                        .as_ref()
-                        .map(|it| schema::events::title.eq(it.as_ref()))
-                };
-                let track_attendance_eq = {
-                    form.track_attendance
-                        .map(|it| schema::events::with_attendance.eq(it))
-                };
-                (description_eq, title_eq, track_attendance_eq)
-            })
-            .execute(conn)
-            .await
-            .map_err(|e| match e {
-                diesel::result::Error::NotFound => ApiError::NotFound(e.to_string()),
-                _ => e.into(),
-            })?;
+        todo!();
+        // diesel::update(schema::events::table.find(id.into_inner()))
+        //     .set({
+        //         let description_eq = {
+        //             form.description
+        //                 .as_ref()
+        //                 .map(|it| schema::events::description.eq(it.as_ref()))
+        //         };
+        //         let title_eq = {
+        //             form.title
+        //                 .as_ref()
+        //                 .map(|it| schema::events::title.eq(it.as_ref()))
+        //         };
+        //         let track_attendance_eq = {
+        //             form.track_attendance
+        //                 .map(|it| schema::events::with_attendance.eq(it))
+        //         };
+        //         (description_eq, title_eq, track_attendance_eq)
+        //     })
+        //     .execute(conn)
+        //     .await
+        //     .map_err(|e| match e {
+        //         diesel::result::Error::NotFound => ApiError::NotFound(e.to_string()),
+        //         _ => e.into(),
+        //     })?;
         Ok(())
     }
 
