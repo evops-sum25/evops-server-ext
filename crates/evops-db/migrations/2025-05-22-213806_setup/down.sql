@@ -13,3 +13,5 @@ DROP TABLE events;
 DROP TABLE tags;
 
 DROP TABLE users;
+
+DROP EXTENSION citext;

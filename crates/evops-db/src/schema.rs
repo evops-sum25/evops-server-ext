@@ -44,7 +44,8 @@ diesel::table! {
 diesel::table! {
     users (id) {
         id -> Uuid,
-        name -> Text,
+        user_login -> Citext,
+        display_name -> Text,
     }
 }
 

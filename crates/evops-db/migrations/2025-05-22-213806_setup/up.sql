@@ -1,6 +1,9 @@
+CREATE EXTENSION citext;
+
 CREATE TABLE users (
     id uuid PRIMARY KEY,
-    name text NOT NULL
+    user_login citext NOT NULL UNIQUE,
+    display_name text NOT NULL
 );
 
 CREATE TABLE tags (

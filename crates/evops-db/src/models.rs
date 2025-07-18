@@ -9,7 +9,8 @@ use crate::schema;
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
     pub id: Uuid,
-    pub name: String,
+    pub user_login: String,
+    pub display_name: String,
 }
 
 #[derive(Queryable, Selectable, Identifiable)]

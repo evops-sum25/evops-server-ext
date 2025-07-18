@@ -12,7 +12,8 @@ use crate::schema;
 #[diesel(check_for_backend(diesel::pg::Pg))]
 struct NewUser<'a> {
     id: Uuid,
-    name: &'a str,
+    user_login: &'a str,
+    display_name: &'a str,
 }
 
 impl crate::Database {
@@ -28,7 +29,8 @@ impl crate::Database {
         diesel::insert_into(schema::users::table)
             .values(self::NewUser {
                 id: user_id.into_inner(),
-                name: form.name.as_ref(),
+                user_login: form.login.as_ref(),
+                display_name: form.display_name.as_ref(),
             })
             .returning(models::User::as_returning())
             .execute(&mut self.conn)
