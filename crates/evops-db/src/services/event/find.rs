@@ -26,7 +26,6 @@ impl crate::Database {
             description: unsafe {
                 evops_models::EventDescription::new_unchecked(event_model.description)
             },
-            with_attendance: event_model.with_attendance,
             created_at: event_model.created_at,
             modified_at: event_model.modified_at,
         };

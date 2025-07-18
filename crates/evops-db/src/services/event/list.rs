@@ -209,7 +209,6 @@ impl crate::Database {
                                     .collect();
                                 unsafe { evops_models::EventTags::new_unchecked(inner_value) }
                             },
-                            with_attendance: event.with_attendance,
                             created_at: event.created_at,
                             modified_at: event.modified_at,
                         },

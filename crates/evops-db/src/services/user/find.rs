@@ -13,7 +13,10 @@ impl crate::Database {
 
         let user = evops_models::User {
             id,
-            name: unsafe { evops_models::UserName::new_unchecked(user_model.name) },
+            login: unsafe { evops_models::UserLogin::new_unchecked(user_model.user_login) },
+            display_name: unsafe {
+                evops_models::UserDisplayName::new_unchecked(user_model.display_name)
+            },
         };
         Ok(user)
     }
