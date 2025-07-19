@@ -8,9 +8,9 @@ CREATE TABLE users (
 );
 
 CREATE TABLE refresh_tokens (
-    id uuid PRIMARY KEY,
-    user_id uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    token_blake3 bytea NOT NULL UNIQUE
+    user_id uuid REFERENCES users (id) ON DELETE CASCADE,
+    token_blake3 bytea NOT NULL UNIQUE,
+    PRIMARY KEY (user_id)
 );
 
 CREATE TABLE tags (
