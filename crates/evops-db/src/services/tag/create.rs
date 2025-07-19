@@ -30,10 +30,12 @@ impl crate::Database {
     pub async fn create_tag(
         &mut self,
         form: evops_models::NewTagForm,
+        owner_id: evops_models::UserId,
     ) -> ApiResult<evops_models::TagId> {
         self.conn
             .transaction(|conn| {
-                async { unsafe { Self::create_tag_unatomic(conn, form).await } }.scope_boxed()
+                async { unsafe { Self::create_tag_unatomic(conn, form, owner_id).await } }
+                    .scope_boxed()
             })
             .await
     }
@@ -41,6 +43,7 @@ impl crate::Database {
     async unsafe fn create_tag_unatomic(
         conn: &mut AsyncPgConnection,
         form: evops_models::NewTagForm,
+        owner_id: evops_models::UserId,
     ) -> ApiResult<evops_models::TagId> {
         let id = evops_models::TagId::new(Uuid::now_v7());
 
@@ -48,7 +51,7 @@ impl crate::Database {
             .values(self::NewTag {
                 id: id.into_inner(),
                 name: form.name.as_ref(),
-                owner_id: todo!(),
+                owner_id: Some(owner_id.into_inner()),
             })
             .execute(conn)
             .await
