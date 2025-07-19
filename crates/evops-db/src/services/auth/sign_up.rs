@@ -1,3 +1,4 @@
+use diesel::QueryResult;
 use diesel::{Insertable, SelectableHelper as _};
 use diesel_async::AsyncConnection as _;
 use diesel_async::AsyncPgConnection;
@@ -42,7 +43,7 @@ impl crate::Database {
             .transaction(|conn| {
                 async {
                     unsafe {
-                        Self::sign_up_user_unatomic(
+                        Self::sign_up_unatomic(
                             conn,
                             user_id,
                             login,
@@ -58,7 +59,7 @@ impl crate::Database {
             .await
     }
 
-    pub async unsafe fn sign_up_user_unatomic(
+    pub async unsafe fn sign_up_unatomic(
         conn: &mut AsyncPgConnection,
         user_id: evops_models::UserId,
         login: &evops_models::UserLogin,
@@ -66,14 +67,7 @@ impl crate::Database {
         display_name: &evops_models::UserDisplayName,
         refresh_token_hash: &evops_models::JsonWebTokenHash,
     ) -> ApiResult<()> {
-        diesel::insert_into(schema::refresh_tokens::table)
-            .values(self::NewRefreshToken {
-                id: Uuid::now_v7(),
-                user_id: user_id.into_inner(),
-                token_blake3: refresh_token_hash.as_ref(),
-            })
-            .execute(conn)
-            .await?;
+        Self::insert_refresh_token(conn, refresh_token_hash, user_id).await?;
 
         diesel::insert_into(schema::users::table)
             .values(self::NewUser {
@@ -86,6 +80,22 @@ impl crate::Database {
             .execute(conn)
             .await?;
 
+        Ok(())
+    }
+
+    pub async fn insert_refresh_token(
+        conn: &mut AsyncPgConnection,
+        token_hash: &evops_models::JsonWebTokenHash,
+        user_id: evops_models::UserId,
+    ) -> QueryResult<()> {
+        diesel::insert_into(schema::refresh_tokens::table)
+            .values(self::NewRefreshToken {
+                id: Uuid::now_v7(),
+                user_id: user_id.into_inner(),
+                token_blake3: token_hash.as_ref(),
+            })
+            .execute(conn)
+            .await?;
         Ok(())
     }
 }
