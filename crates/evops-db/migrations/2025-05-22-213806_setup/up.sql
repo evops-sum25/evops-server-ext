@@ -41,7 +41,7 @@ CREATE TABLE events_to_tags (
     PRIMARY KEY (event_id, tag_id)
 );
 
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE EXTENSION pg_trgm;
 
 CREATE INDEX events_title_trgm_idx ON events USING GIN (title gin_trgm_ops);
 

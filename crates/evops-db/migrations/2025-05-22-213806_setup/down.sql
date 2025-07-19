@@ -6,7 +6,7 @@ DROP INDEX IF EXISTS events_title_trgm_idx;
 
 DROP INDEX IF EXISTS events_desc_trgm_idx;
 
-DROP EXTENSION IF EXISTS pg_trgm;
+DROP EXTENSION pg_trgm;
 
 DROP TABLE events_to_tags;
 
