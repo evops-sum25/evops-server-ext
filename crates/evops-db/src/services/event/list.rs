@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use diesel::BoolExpressionMethods;
-use diesel::PgTextExpressionMethods;
-use diesel::QueryResult;
-use diesel::{ExpressionMethods as _, QueryDsl as _, SelectableHelper as _};
+use diesel::{
+    BoolExpressionMethods as _, ExpressionMethods as _, PgTextExpressionMethods as _,
+    QueryDsl as _, QueryResult, SelectableHelper as _,
+};
 use diesel_async::{AsyncPgConnection, RunQueryDsl as _};
 use itertools::Itertools as _;
 use uuid::Uuid;
