@@ -16,7 +16,10 @@ impl crate::Database {
                 .into_iter()
                 .map(|user_model| evops_models::User {
                     id: evops_models::UserId::new(user_model.id),
-                    name: unsafe { evops_models::UserName::new_unchecked(user_model.name) },
+                    login: unsafe { evops_models::UserLogin::new_unchecked(user_model.user_login) },
+                    display_name: unsafe {
+                        evops_models::UserDisplayName::new_unchecked(user_model.display_name)
+                    },
                 })
                 .collect()
         };

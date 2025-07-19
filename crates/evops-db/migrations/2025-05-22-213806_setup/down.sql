@@ -18,4 +18,8 @@ DROP TABLE events;
 
 DROP TABLE tags;
 
+DROP TABLE refresh_tokens;
+
 DROP TABLE users;
+
+DROP EXTENSION citext;

@@ -522,6 +522,7 @@ dependencies = [
  "image",
  "nutype",
  "regex",
+ "serde",
  "thiserror 2.0.12",
  "uuid",
  "webp",
@@ -2107,6 +2108,7 @@ dependencies = [
  "getrandom 0.3.3",
  "js-sys",
  "rand 0.9.1",
+ "serde",
  "wasm-bindgen",
 ]
 

@@ -17,7 +17,6 @@ struct NewEvent<'a> {
     title: &'a str,
     description: &'a str,
     author_id: Uuid,
-    with_attendance: bool,
     created_at: &'a DateTime<Utc>,
     modified_at: &'a DateTime<Utc>,
 }
@@ -35,10 +34,12 @@ impl crate::Database {
     pub async fn create_event(
         &mut self,
         form: evops_models::NewEventForm,
+        author_id: evops_models::UserId,
     ) -> ApiResult<evops_models::EventId> {
         self.conn
             .transaction(|conn| {
-                async { unsafe { Self::create_event_unatomic(conn, form).await } }.scope_boxed()
+                async { unsafe { Self::create_event_unatomic(conn, form, author_id).await } }
+                    .scope_boxed()
             })
             .await
     }
@@ -46,6 +47,7 @@ impl crate::Database {
     async unsafe fn create_event_unatomic(
         conn: &mut AsyncPgConnection,
         form: evops_models::NewEventForm,
+        author_id: evops_models::UserId,
     ) -> ApiResult<evops_models::EventId> {
         let event_id = evops_models::EventId::new(Uuid::now_v7());
 
@@ -55,8 +57,7 @@ impl crate::Database {
                 id: event_id.into_inner(),
                 title: form.title.as_ref(),
                 description: form.description.as_ref(),
-                author_id: form.author_id.into_inner(),
-                with_attendance: form.with_attendance,
+                author_id: author_id.into_inner(),
                 created_at: &now,
                 modified_at: &now,
             })
