@@ -163,7 +163,14 @@ impl crate::Database {
                             id: evops_models::EventId::new(event.id),
                             author: evops_models::User {
                                 id: evops_models::UserId::new(author.id),
-                                name: unsafe { evops_models::UserName::new_unchecked(author.name) },
+                                display_name: unsafe {
+                                    evops_models::UserDisplayName::new_unchecked(
+                                        author.display_name,
+                                    )
+                                },
+                                login: unsafe {
+                                    evops_models::UserLogin::new_unchecked(author.user_login)
+                                },
                             },
                             image_ids: {
                                 let inner_value = images
