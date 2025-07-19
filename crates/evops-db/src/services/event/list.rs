@@ -18,7 +18,7 @@ impl crate::Database {
         &mut self,
         last_id: Option<evops_models::EventId>,
         limit: Option<evops_models::PgLimit>,
-        tags: Option<evops_models::EventTagIds>,
+        tags: Vec<evops_models::TagId>,
         search: Option<String>,
     ) -> ApiResult<Vec<evops_models::Event>> {
         let event_ids =
@@ -30,7 +30,7 @@ impl crate::Database {
         conn: &mut AsyncPgConnection,
         last_id: Option<evops_models::EventId>,
         limit: Option<evops_models::PgLimit>,
-        tags: Option<evops_models::EventTagIds>,
+        tags: Vec<evops_models::TagId>,
         search: Option<String>,
     ) -> QueryResult<Vec<Uuid>> {
         let mut query = {
@@ -38,11 +38,10 @@ impl crate::Database {
                 .select(schema::events::id)
                 .into_boxed()
         };
-        let tags: Option<Vec<_>> =
-            tags.map(|e| e.into_inner().iter().map(|e| e.into_inner()).collect());
-        if tags.is_some() {
+        let tags: Vec<_> = tags.into_iter().map(|e| e.into_inner()).collect();
+        if !tags.is_empty() {
             let tagged_event_ids = schema::events_to_tags::table
-                .filter(schema::events_to_tags::tag_id.eq_any(tags.unwrap()))
+                .filter(schema::events_to_tags::tag_id.eq_any(tags))
                 .select(schema::events_to_tags::event_id);
             query = query.filter(schema::events::id.eq_any(tagged_event_ids));
         }
