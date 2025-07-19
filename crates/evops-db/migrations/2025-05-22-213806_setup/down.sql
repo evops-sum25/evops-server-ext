@@ -2,9 +2,9 @@ DROP INDEX event_id_idx;
 
 DROP INDEX tag_id_idx;
 
-DROP INDEX IF EXISTS events_title_trgm_idx;
+DROP INDEX events_title_trgm_idx;
 
-DROP INDEX IF EXISTS events_desc_trgm_idx;
+DROP INDEX events_desc_trgm_idx;
 
 DROP EXTENSION pg_trgm;
 
