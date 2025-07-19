@@ -1,11 +1,22 @@
+CREATE EXTENSION citext;
+
 CREATE TABLE users (
     id uuid PRIMARY KEY,
-    name text NOT NULL
+    user_login citext NOT NULL UNIQUE,
+    password_argon2 text NOT NULL,
+    display_name text NOT NULL
+);
+
+CREATE TABLE refresh_tokens (
+    id uuid PRIMARY KEY,
+    user_id uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    token_blake3 bytea NOT NULL UNIQUE
 );
 
 CREATE TABLE tags (
     id uuid PRIMARY KEY,
-    name text UNIQUE NOT NULL
+    name text UNIQUE NOT NULL,
+    owner_id uuid REFERENCES users (id)
 );
 
 CREATE INDEX tag_id_idx ON tags (id);
@@ -21,7 +32,6 @@ CREATE TABLE events (
     title text NOT NULL,
     description text NOT NULL,
     author_id uuid NOT NULL REFERENCES users (id),
-    with_attendance bool NOT NULL,
     created_at timestamptz NOT NULL,
     modified_at timestamptz NOT NULL
 );

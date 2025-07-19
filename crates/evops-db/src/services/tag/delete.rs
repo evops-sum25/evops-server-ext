@@ -8,7 +8,15 @@ use evops_models::{ApiError, ApiResult};
 use crate::schema;
 
 impl crate::Database {
-    pub async fn delete_tag(&mut self, id: evops_models::TagId) -> ApiResult<()> {
+    pub async fn delete_tag(
+        &mut self,
+        id: evops_models::TagId,
+        user_id: evops_models::UserId,
+    ) -> ApiResult<()> {
+        let tag_model = Self::find_tag_model(&mut self.conn, id).await?;
+        if Some(user_id.into_inner()) != tag_model.owner_id {
+            return Err(ApiError::Forbidden("You can't delete this tag.".to_owned()));
+        }
         self.conn
             .transaction(|conn| {
                 async { unsafe { Self::delete_tag_unatomic(conn, id) }.await }.scope_boxed()

@@ -10,16 +10,30 @@ use evops_models::{ApiError, ApiResult};
 use crate::schema;
 
 impl crate::Database {
-    pub async fn delete_event(&mut self, id: evops_models::EventId) -> ApiResult<()> {
+    pub async fn delete_event(
+        &mut self,
+        event_id: evops_models::EventId,
+        user_id: evops_models::UserId,
+    ) -> ApiResult<evops_models::EventImageIds> {
+        let event = self.find_event(event_id).await?;
+        if user_id != event.author.id {
+            return Err(ApiError::Forbidden({
+                "You can't delete this event.".to_owned()
+            }));
+        }
+
         self.conn
             .transaction(|conn| {
                 async {
-                    unsafe { Self::delete_events_to_tags(conn, id) }.await?;
-                    unsafe { Self::delete_event_table(conn, id) }.await
+                    unsafe { Self::delete_events_to_tags(conn, event_id) }.await?;
+                    unsafe { Self::delete_event_table(conn, event_id) }.await?;
+                    ApiResult::Ok(())
                 }
                 .scope_boxed()
             })
-            .await
+            .await?;
+
+        Ok(event.image_ids)
     }
 
     async unsafe fn delete_events_to_tags(

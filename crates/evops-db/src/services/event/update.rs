@@ -12,21 +12,25 @@ use crate::schema;
 impl crate::Database {
     pub async fn update_event(
         &mut self,
-        id: evops_models::EventId,
+        event_id: evops_models::EventId,
+        user_id: evops_models::UserId,
         form: evops_models::UpdateEventForm,
     ) -> ApiResult<()> {
+        let event_model = Self::find_event_model(&mut self.conn, event_id).await?;
+        if user_id.into_inner() != event_model.author_id {
+            return Err(ApiError::Forbidden({
+                "You can't modify this event.".to_owned()
+            }));
+        }
         self.conn
             .transaction(|conn| {
                 async {
-                    if form.description.is_some()
-                        || form.title.is_some()
-                        || form.track_attendance.is_some()
-                    {
-                        unsafe { Self::update_basic_fields(conn, id, &form) }.await?;
+                    if form.description.is_some() || form.title.is_some() {
+                        unsafe { Self::update_basic_fields(conn, event_id, &form) }.await?;
                     }
                     if let Some(tag_ids) = form.tag_ids {
-                        unsafe { Self::delete_tags_for_event(conn, id) }.await?;
-                        unsafe { Self::create_tags_for_event(conn, id, tag_ids) }.await?;
+                        unsafe { Self::delete_tags_for_event(conn, event_id) }.await?;
+                        unsafe { Self::create_tags_for_event(conn, event_id, tag_ids) }.await?;
                     }
                     ApiResult::Ok(())
                 }
@@ -53,11 +57,7 @@ impl crate::Database {
                         .as_ref()
                         .map(|it| schema::events::title.eq(it.as_ref()))
                 };
-                let track_attendance_eq = {
-                    form.track_attendance
-                        .map(|it| schema::events::with_attendance.eq(it))
-                };
-                (description_eq, title_eq, track_attendance_eq)
+                (description_eq, title_eq)
             })
             .execute(conn)
             .await
