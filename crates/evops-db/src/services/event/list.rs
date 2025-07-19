@@ -34,7 +34,10 @@ impl crate::Database {
         tags: Vec<evops_models::TagId>,
         search: Option<String>,
     ) -> QueryResult<Vec<Uuid>> {
-        let tags: Vec<_> = tags.into_iter().map(evops_models::TagId::into_inner).collect();
+        let tags: Vec<_> = tags
+            .into_iter()
+            .map(evops_models::TagId::into_inner)
+            .collect();
         let mut query = schema::events::table
             .left_join(
                 schema::events_to_tags::table.on(schema::events::id
@@ -64,7 +67,6 @@ impl crate::Database {
         if let Some(last_id) = last_id {
             query = query.filter(schema::events::id.gt(last_id.into_inner()));
         }
-        query = query.order(schema::events::id.asc());
         if let Some(limit) = limit {
             query = query.limit(limit.into());
         }
@@ -86,17 +88,7 @@ impl crate::Database {
                 diesel::result::Error::NotFound => evops_models::ApiError::NotFound(e.to_string()),
                 _ => e.into(),
             })?;
-        let mut event_map = HashMap::new();
-        for (event, user) in result_raw {
-            event_map.insert(event.id, (event, user));
-        }
-        let mut result = Vec::with_capacity(event_ids_raw.len());
-        for event_id in event_ids_raw {
-            if let Some(pair) = event_map.remove(event_id) {
-                result.push(pair);
-            }
-        }
-        Ok(result)
+        Ok(result_raw)
     }
 
     async fn get_tags(
@@ -161,64 +153,76 @@ impl crate::Database {
         let images = Self::get_images(conn, &event_ids_raw).await?;
         let mut tags = Self::get_tags(conn, &event_ids_raw).await?;
 
-        let events: Vec<evops_models::Event> = {
+        let mut events: HashMap<Uuid, evops_models::Event> = {
             events_with_authors
                 .into_iter()
-                .map(|(event, author)| evops_models::Event {
-                    id: evops_models::EventId::new(event.id),
-                    author: evops_models::User {
-                        id: evops_models::UserId::new(author.id),
-                        name: unsafe { evops_models::UserName::new_unchecked(author.name) },
-                    },
-                    image_ids: {
-                        let inner_value = images
-                            .get(&event.id)
-                            .unwrap_or(&Vec::new())
-                            .iter()
-                            .map(|img| evops_models::EventImageId::new(img.id))
-                            .collect();
-                        unsafe { evops_models::EventImageIds::new_unchecked(inner_value) }
-                    },
-                    title: unsafe { evops_models::EventTitle::new_unchecked(event.title) },
-                    description: unsafe {
-                        evops_models::EventDescription::new_unchecked(event.description)
-                    },
-                    tags: {
-                        let inner_value = tags
-                            .remove(&event.id)
-                            .unwrap_or_default()
-                            .into_iter()
-                            .map(|t| evops_models::Tag {
-                                id: evops_models::TagId::new(t.0.id),
-                                name: unsafe {
-                                    evops_models::TagName::new_unchecked(t.0.name.clone())
-                                },
-                                aliases: {
-                                    let inner_value =
-                                        t.1.map(|aliases| {
-                                            aliases
-                                                .into_iter()
-                                                .map(|alias| unsafe {
-                                                    evops_models::TagAlias::new_unchecked({
-                                                        alias.alias
-                                                    })
+                .map(|(event, author)| {
+                    (
+                        event.id,
+                        evops_models::Event {
+                            id: evops_models::EventId::new(event.id),
+                            author: evops_models::User {
+                                id: evops_models::UserId::new(author.id),
+                                name: unsafe { evops_models::UserName::new_unchecked(author.name) },
+                            },
+                            image_ids: {
+                                let inner_value = images
+                                    .get(&event.id)
+                                    .unwrap_or(&Vec::new())
+                                    .iter()
+                                    .map(|img| evops_models::EventImageId::new(img.id))
+                                    .collect();
+                                unsafe { evops_models::EventImageIds::new_unchecked(inner_value) }
+                            },
+                            title: unsafe { evops_models::EventTitle::new_unchecked(event.title) },
+                            description: unsafe {
+                                evops_models::EventDescription::new_unchecked(event.description)
+                            },
+                            tags: {
+                                let inner_value = tags
+                                    .remove(&event.id)
+                                    .unwrap_or_default()
+                                    .into_iter()
+                                    .map(|t| evops_models::Tag {
+                                        id: evops_models::TagId::new(t.0.id),
+                                        name: unsafe {
+                                            evops_models::TagName::new_unchecked(t.0.name.clone())
+                                        },
+                                        aliases: {
+                                            let inner_value =
+                                                t.1.map(|aliases| {
+                                                    aliases
+                                                        .into_iter()
+                                                        .map(|alias| unsafe {
+                                                            evops_models::TagAlias::new_unchecked({
+                                                                alias.alias
+                                                            })
+                                                        })
+                                                        .collect()
                                                 })
-                                                .collect()
-                                        })
-                                        .unwrap_or_default();
-                                    unsafe { evops_models::TagAliases::new_unchecked(inner_value) }
-                                },
-                            })
-                            .collect();
-                        unsafe { evops_models::EventTags::new_unchecked(inner_value) }
-                    },
-                    with_attendance: event.with_attendance,
-                    created_at: event.created_at,
-                    modified_at: event.modified_at,
+                                                .unwrap_or_default();
+                                            unsafe {
+                                                evops_models::TagAliases::new_unchecked(inner_value)
+                                            }
+                                        },
+                                    })
+                                    .collect();
+                                unsafe { evops_models::EventTags::new_unchecked(inner_value) }
+                            },
+                            with_attendance: event.with_attendance,
+                            created_at: event.created_at,
+                            modified_at: event.modified_at,
+                        },
+                    )
                 })
                 .collect()
         };
-
-        Ok(events)
+        let mut result = Vec::with_capacity(event_ids_raw.len());
+        for event_id in event_ids_raw {
+            if let Some(pair) = events.remove(&event_id) {
+                result.push(pair);
+            }
+        }
+        Ok(result)
     }
 }
