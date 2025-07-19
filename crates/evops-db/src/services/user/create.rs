@@ -30,7 +30,7 @@ struct NewRefreshToken<'a> {
 }
 
 impl crate::Database {
-    pub async fn sign_up_user(
+    pub async fn sign_up(
         &mut self,
         user_id: evops_models::UserId,
         login: &evops_models::UserLogin,
