@@ -25,7 +25,14 @@ impl crate::Database {
         &mut self,
         event_id: evops_models::EventId,
         image_id: evops_models::EventImageId,
+        user_id: evops_models::UserId,
     ) -> ApiResult<()> {
+        let event_model = Self::find_event_model(&mut self.conn, event_id).await?;
+        if user_id.into_inner() != event_model.author_id {
+            return Err(ApiError::Forbidden({
+                "You can't modify this event.".to_owned()
+            }));
+        }
         self.conn
             .transaction(|conn| {
                 async { unsafe { Self::reserve_image_unatomic(conn, event_id, image_id).await } }
