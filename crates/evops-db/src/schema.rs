@@ -27,7 +27,8 @@ diesel::table! {
 }
 
 diesel::table! {
-    refresh_tokens (user_id) {
+    refresh_tokens (id) {
+        id -> Uuid,
         user_id -> Uuid,
         token_blake3 -> Bytea,
     }

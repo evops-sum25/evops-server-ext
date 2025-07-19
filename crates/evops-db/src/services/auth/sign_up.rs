@@ -1,9 +1,6 @@
-use diesel::{ExpressionMethods, QueryResult};
-use diesel::{Insertable, SelectableHelper as _};
-use diesel_async::AsyncConnection as _;
-use diesel_async::AsyncPgConnection;
-use diesel_async::RunQueryDsl as _;
+use diesel::{Insertable, QueryResult, SelectableHelper as _};
 use diesel_async::scoped_futures::ScopedFutureExt as _;
+use diesel_async::{AsyncConnection as _, AsyncPgConnection, RunQueryDsl as _};
 use uuid::Uuid;
 
 use evops_models::ApiResult;
@@ -25,6 +22,7 @@ struct NewUser<'a> {
 #[diesel(table_name = schema::refresh_tokens)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 struct NewRefreshToken<'a> {
+    id: Uuid,
     user_id: Uuid,
     token_blake3: &'a [u8],
 }
@@ -77,24 +75,22 @@ impl crate::Database {
             .execute(conn)
             .await?;
 
-        Self::insert_refresh_token(conn, refresh_token_hash, user_id).await?;
+        Self::insert_refresh_token_inner(conn, refresh_token_hash, user_id).await?;
 
         Ok(())
     }
 
-    pub async fn insert_refresh_token(
+    pub async fn insert_refresh_token_inner(
         conn: &mut AsyncPgConnection,
         token_hash: &evops_models::JsonWebTokenHash,
         user_id: evops_models::UserId,
     ) -> QueryResult<()> {
         diesel::insert_into(schema::refresh_tokens::table)
             .values(self::NewRefreshToken {
+                id: Uuid::now_v7(),
                 user_id: user_id.into_inner(),
                 token_blake3: token_hash.as_ref(),
             })
-            .on_conflict(schema::refresh_tokens::user_id)
-            .do_update()
-            .set(schema::refresh_tokens::token_blake3.eq(token_hash.as_ref()))
             .execute(conn)
             .await?;
         Ok(())
