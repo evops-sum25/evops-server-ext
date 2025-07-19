@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use diesel::BoolExpressionMethods;
+use diesel::PgTextExpressionMethods;
 use diesel::QueryResult;
 use diesel::{ExpressionMethods as _, QueryDsl as _, SelectableHelper as _};
 use diesel_async::{AsyncPgConnection, RunQueryDsl as _};
@@ -17,8 +19,10 @@ impl crate::Database {
         last_id: Option<evops_models::EventId>,
         limit: Option<evops_models::PgLimit>,
         tags: Option<evops_models::EventTagIds>,
+        search: Option<String>,
     ) -> ApiResult<Vec<evops_models::Event>> {
-        let event_ids = Self::list_event_ids_raw(&mut self.conn, last_id, limit, tags).await?;
+        let event_ids =
+            Self::list_event_ids_raw(&mut self.conn, last_id, limit, tags, search).await?;
         Self::list_events_private(&mut self.conn, event_ids).await
     }
 
@@ -27,6 +31,7 @@ impl crate::Database {
         last_id: Option<evops_models::EventId>,
         limit: Option<evops_models::PgLimit>,
         tags: Option<evops_models::EventTagIds>,
+        search: Option<String>,
     ) -> QueryResult<Vec<Uuid>> {
         let mut query = {
             schema::events::table
@@ -40,6 +45,13 @@ impl crate::Database {
                 .filter(schema::events_to_tags::tag_id.eq_any(tags.unwrap()))
                 .select(schema::events_to_tags::event_id);
             query = query.filter(schema::events::id.eq_any(tagged_event_ids));
+        }
+        if let Some(search_term) = search {
+            query = query.filter(
+                schema::events::title
+                    .ilike(format!("%{}%", search_term))
+                    .or(schema::events::description.ilike(format!("%{}%", search_term))),
+            );
         }
         if let Some(last_id) = last_id {
             query = query.filter(schema::events::id.gt(last_id.into_inner()));
