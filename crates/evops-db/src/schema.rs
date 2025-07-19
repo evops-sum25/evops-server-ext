@@ -27,6 +27,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    refresh_tokens (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        token_blake3 -> Text,
+    }
+}
+
+diesel::table! {
     tag_aliases (tag_id, alias) {
         tag_id -> Uuid,
         alias -> Text,
@@ -45,6 +53,7 @@ diesel::table! {
     users (id) {
         id -> Uuid,
         user_login -> Citext,
+        password_argon2 -> Text,
         display_name -> Text,
     }
 }
@@ -53,6 +62,7 @@ diesel::joinable!(event_images -> events (event_id));
 diesel::joinable!(events -> users (author_id));
 diesel::joinable!(events_to_tags -> events (event_id));
 diesel::joinable!(events_to_tags -> tags (tag_id));
+diesel::joinable!(refresh_tokens -> users (user_id));
 diesel::joinable!(tag_aliases -> tags (tag_id));
 diesel::joinable!(tags -> users (owner_id));
 
@@ -60,6 +70,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     event_images,
     events,
     events_to_tags,
+    refresh_tokens,
     tag_aliases,
     tags,
     users,

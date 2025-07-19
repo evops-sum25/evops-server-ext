@@ -10,7 +10,17 @@ use crate::schema;
 pub struct User {
     pub id: Uuid,
     pub user_login: String,
+    pub password_argon2: String,
     pub display_name: String,
+}
+
+#[derive(Queryable, Selectable, Identifiable)]
+#[diesel(table_name=schema::refresh_tokens)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct RefreshToken {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub token_blake3: String,
 }
 
 #[derive(Queryable, Selectable, Identifiable)]
