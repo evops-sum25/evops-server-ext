@@ -19,5 +19,6 @@ uuid = { version = "1.17.0", features = ["fast-rng"] }
 [workspace.lints.clippy]
 all = "warn"
 missing-errors-doc = { level = "allow", priority = 1 }
+missing-safety-doc = { level = "allow", priority = 1 }
 nursery = "warn"
 pedantic = "warn"

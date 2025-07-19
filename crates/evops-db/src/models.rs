@@ -9,6 +9,7 @@ use crate::schema;
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
     pub id: Uuid,
+    #[allow(clippy::struct_field_names)]
     pub user_login: String,
     pub password_argon2: String,
     pub display_name: String,
