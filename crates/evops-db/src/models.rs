@@ -20,7 +20,7 @@ pub struct User {
 pub struct RefreshToken {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub token_blake3: String,
+    pub token_blake3: Vec<u8>,
 }
 
 #[derive(Queryable, Selectable, Identifiable)]

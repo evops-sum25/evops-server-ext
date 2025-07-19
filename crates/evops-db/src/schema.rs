@@ -30,7 +30,7 @@ diesel::table! {
     refresh_tokens (id) {
         id -> Uuid,
         user_id -> Uuid,
-        token_blake3 -> Text,
+        token_blake3 -> Bytea,
     }
 }
 

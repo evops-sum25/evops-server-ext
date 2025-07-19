@@ -1,3 +1,5 @@
+use diesel::IntoSql;
+use diesel::query_builder::Query;
 use diesel::{Insertable, SelectableHelper as _};
 use diesel_async::AsyncConnection as _;
 use diesel_async::AsyncPgConnection;
@@ -20,6 +22,15 @@ struct NewUser<'a> {
     display_name: &'a str,
 }
 
+#[derive(Insertable)]
+#[diesel(table_name = schema::refresh_tokens)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+struct NewRefreshToken<'a> {
+    id: Uuid,
+    user_id: Uuid,
+    token_blake3: &'a [u8],
+}
+
 impl crate::Database {
     pub async fn sign_up_user(
         &mut self,
@@ -27,7 +38,7 @@ impl crate::Database {
         login: &evops_models::UserLogin,
         password_hash: &evops_models::UserPasswordHash,
         display_name: &evops_models::UserDisplayName,
-        refresh_token: &evops_models::JsonWebToken,
+        refresh_token_hash: &evops_models::JsonWebTokenHash,
     ) -> ApiResult<()> {
         self.conn
             .transaction(|conn| {
@@ -39,7 +50,7 @@ impl crate::Database {
                             login,
                             password_hash,
                             display_name,
-                            refresh_token,
+                            refresh_token_hash,
                         )
                         .await
                     }
@@ -55,8 +66,17 @@ impl crate::Database {
         login: &evops_models::UserLogin,
         password_hash: &evops_models::UserPasswordHash,
         display_name: &evops_models::UserDisplayName,
-        refresh_token: &evops_models::JsonWebToken,
+        refresh_token_hash: &evops_models::JsonWebTokenHash,
     ) -> ApiResult<()> {
+        diesel::insert_into(schema::refresh_tokens::table)
+            .values(self::NewRefreshToken {
+                id: Uuid::now_v7(),
+                user_id: user_id.into_inner(),
+                token_blake3: refresh_token_hash.as_ref(),
+            })
+            .execute(conn)
+            .await?;
+
         diesel::insert_into(schema::users::table)
             .values(self::NewUser {
                 id: user_id.into_inner(),

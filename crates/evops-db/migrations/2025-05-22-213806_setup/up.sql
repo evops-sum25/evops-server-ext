@@ -10,7 +10,7 @@ CREATE TABLE users (
 CREATE TABLE refresh_tokens (
     id uuid PRIMARY KEY,
     user_id uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    token_blake3 text NOT NULL UNIQUE
+    token_blake3 bytea NOT NULL UNIQUE
 );
 
 CREATE TABLE tags (
