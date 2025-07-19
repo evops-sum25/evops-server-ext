@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
 use diesel::{
-    BoolExpressionMethods as _, ExpressionMethods as _, PgTextExpressionMethods as _,
-    QueryDsl as _, QueryResult, SelectableHelper as _,
+    BoolExpressionMethods as _, ExpressionMethods as _, JoinOnDsl as _,
+    PgSortExpressionMethods as _, PgTextExpressionMethods as _, QueryDsl as _, QueryResult,
+    SelectableHelper as _,
 };
 use diesel_async::{AsyncPgConnection, RunQueryDsl as _};
 use itertools::Itertools as _;
@@ -33,18 +34,26 @@ impl crate::Database {
         tags: Vec<evops_models::TagId>,
         search: Option<String>,
     ) -> QueryResult<Vec<Uuid>> {
-        let mut query = {
-            schema::events::table
-                .select(schema::events::id)
-                .into_boxed()
-        };
         let tags: Vec<_> = tags.into_iter().map(|e| e.into_inner()).collect();
-        if !tags.is_empty() {
-            let tagged_event_ids = schema::events_to_tags::table
-                .filter(schema::events_to_tags::tag_id.eq_any(tags))
-                .select(schema::events_to_tags::event_id);
-            query = query.filter(schema::events::id.eq_any(tagged_event_ids));
-        }
+        let mut query = schema::events::table
+            .left_join(
+                schema::events_to_tags::table.on(schema::events::id
+                    .eq(schema::events_to_tags::event_id)
+                    .and(schema::events_to_tags::tag_id.eq_any(&tags))),
+            )
+            .group_by(schema::events::id)
+            .select(schema::events::id)
+            .order_by(
+                diesel::dsl::count(schema::events_to_tags::tag_id)
+                    .desc()
+                    .nulls_last(),
+            )
+            .then_order_by(schema::events::id.asc())
+            .into_boxed();
+        tracing::info!(
+            "Query: {}",
+            diesel::debug_query::<diesel::pg::Pg, _>(&query).to_string()
+        );
         if let Some(search_term) = search {
             query = query.filter(
                 schema::events::title
@@ -63,38 +72,40 @@ impl crate::Database {
         Ok(event_ids_raw)
     }
 
-    // TODO: refactor this.
-    #[allow(clippy::too_many_lines)]
-    async fn list_events_private(
+    async fn get_events_with_authors(
         conn: &mut AsyncPgConnection,
-        event_ids_raw: Vec<Uuid>,
-    ) -> ApiResult<Vec<evops_models::Event>> {
-        if event_ids_raw.is_empty() {
-            return Ok(Vec::default());
+        event_ids_raw: &Vec<Uuid>,
+    ) -> ApiResult<Vec<(models::Event, models::User)>> {
+        let result_raw: Vec<(models::Event, models::User)> = schema::events::table
+            .inner_join(schema::users::table)
+            .filter(schema::events::id.eq_any(event_ids_raw))
+            .select((models::Event::as_select(), models::User::as_select()))
+            .load(conn)
+            .await
+            .map_err(|e| match e {
+                diesel::result::Error::NotFound => evops_models::ApiError::NotFound(e.to_string()),
+                _ => e.into(),
+            })?;
+        let mut event_map = HashMap::new();
+        for (_idx, (event, user)) in result_raw.into_iter().enumerate() {
+            event_map.insert(event.id, (event, user));
         }
+        let mut result = Vec::with_capacity(event_ids_raw.len());
+        for event_id in event_ids_raw {
+            if let Some(pair) = event_map.remove(event_id) {
+                result.push(pair);
+            }
+        }
+        Ok(result)
+    }
 
-        let events_with_authors: Vec<(models::Event, models::User)> = {
-            schema::events::table
-                .inner_join(schema::users::table)
-                .filter(schema::events::id.eq_any(&event_ids_raw))
-                .order(schema::events::id.asc())
-                .select((models::Event::as_select(), models::User::as_select()))
-                .load(conn)
-                .await?
-        };
-        let images = {
-            schema::event_images::table
-                .filter(schema::event_images::event_id.eq_any(&event_ids_raw))
-                .select(models::EventImage::as_select())
-                .load(conn)
-                .await?
-                .into_iter()
-                .into_group_map_by(|img| img.event_id)
-        };
-
-        let mut tags: HashMap<Uuid, HashMap<models::Tag, Option<Vec<models::TagAlias>>>> = {
+    async fn get_tags(
+        conn: &mut AsyncPgConnection,
+        event_ids_raw: &Vec<Uuid>,
+    ) -> ApiResult<HashMap<Uuid, HashMap<models::Tag, Option<Vec<models::TagAlias>>>>> {
+        let result: HashMap<Uuid, HashMap<models::Tag, Option<Vec<models::TagAlias>>>> = {
             let event_tags: Vec<(Uuid, models::Tag)> = schema::events_to_tags::table
-                .filter(schema::events_to_tags::event_id.eq_any(&event_ids_raw))
+                .filter(schema::events_to_tags::event_id.eq_any(event_ids_raw))
                 .inner_join(schema::tags::table)
                 .select((schema::events_to_tags::event_id, models::Tag::as_select()))
                 .load::<(Uuid, models::Tag)>(conn)
@@ -121,6 +132,34 @@ impl crate::Database {
                     outer_map
                 })
         };
+        Ok(result)
+    }
+
+    async fn get_images(
+        conn: &mut AsyncPgConnection,
+        event_ids_raw: &Vec<Uuid>,
+    ) -> ApiResult<HashMap<uuid::Uuid, Vec<models::EventImage>>> {
+        let result = schema::event_images::table
+            .filter(schema::event_images::event_id.eq_any(event_ids_raw))
+            .select(models::EventImage::as_select())
+            .load(conn)
+            .await?
+            .into_iter()
+            .into_group_map_by(|img| img.event_id);
+        Ok(result)
+    }
+
+    async fn list_events_private(
+        conn: &mut AsyncPgConnection,
+        event_ids_raw: Vec<Uuid>,
+    ) -> ApiResult<Vec<evops_models::Event>> {
+        if event_ids_raw.is_empty() {
+            return Ok(Vec::default());
+        }
+
+        let events_with_authors = Self::get_events_with_authors(conn, &event_ids_raw).await?;
+        let images = Self::get_images(conn, &event_ids_raw).await?;
+        let mut tags = Self::get_tags(conn, &event_ids_raw).await?;
 
         let events: Vec<evops_models::Event> = {
             events_with_authors
@@ -179,8 +218,6 @@ impl crate::Database {
                 })
                 .collect()
         };
-        // Maybe we will do it... Later
-        // last_id = event_ids.last().map(|id| evops_models::EventId::new(*id))
 
         Ok(events)
     }
