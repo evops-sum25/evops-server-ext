@@ -40,3 +40,9 @@ CREATE TABLE events_to_tags (
     tag_id uuid REFERENCES tags (id),
     PRIMARY KEY (event_id, tag_id)
 );
+
+CREATE EXTENSION pg_trgm;
+
+CREATE INDEX events_title_trgm_idx ON events USING GIN (title gin_trgm_ops);
+
+CREATE INDEX events_desc_trgm_idx ON events USING GIN (description gin_trgm_ops);
