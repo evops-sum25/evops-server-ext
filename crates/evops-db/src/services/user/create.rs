@@ -1,5 +1,3 @@
-use diesel::IntoSql;
-use diesel::query_builder::Query;
 use diesel::{Insertable, SelectableHelper as _};
 use diesel_async::AsyncConnection as _;
 use diesel_async::AsyncPgConnection;
