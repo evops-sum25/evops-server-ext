@@ -34,7 +34,7 @@ impl crate::Database {
         tags: Vec<evops_models::TagId>,
         search: Option<String>,
     ) -> QueryResult<Vec<Uuid>> {
-        let tags: Vec<_> = tags.into_iter().map(|e| e.into_inner()).collect();
+        let tags: Vec<_> = tags.into_iter().map(evops_models::TagId::into_inner).collect();
         let mut query = schema::events::table
             .left_join(
                 schema::events_to_tags::table.on(schema::events::id
@@ -87,7 +87,7 @@ impl crate::Database {
                 _ => e.into(),
             })?;
         let mut event_map = HashMap::new();
-        for (_idx, (event, user)) in result_raw.into_iter().enumerate() {
+        for (event, user) in result_raw {
             event_map.insert(event.id, (event, user));
         }
         let mut result = Vec::with_capacity(event_ids_raw.len());
