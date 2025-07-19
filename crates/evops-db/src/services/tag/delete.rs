@@ -15,7 +15,7 @@ impl crate::Database {
     ) -> ApiResult<()> {
         let tag_model = Self::find_tag_model(&mut self.conn, id).await?;
         if Some(user_id.into_inner()) != tag_model.owner_id {
-            return Err(ApiError::Forbidden("You can’t delete this tag.".to_owned()));
+            return Err(ApiError::Forbidden("You can't delete this tag.".to_owned()));
         }
         self.conn
             .transaction(|conn| {

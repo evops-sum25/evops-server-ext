@@ -18,7 +18,7 @@ impl crate::Database {
         let event = self.find_event(event_id).await?;
         if user_id != event.author.id {
             return Err(ApiError::Forbidden({
-                "You can’t delete this event.".to_owned()
+                "You can't delete this event.".to_owned()
             }));
         }
 
