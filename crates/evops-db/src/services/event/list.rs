@@ -40,7 +40,7 @@ impl crate::Database {
         };
         let tags: Option<Vec<_>> =
             tags.map(|e| e.into_inner().iter().map(|e| e.into_inner()).collect());
-        if let Some(_) = tags {
+        if tags.is_some() {
             let tagged_event_ids = schema::events_to_tags::table
                 .filter(schema::events_to_tags::tag_id.eq_any(tags.unwrap()))
                 .select(schema::events_to_tags::event_id);
@@ -49,8 +49,8 @@ impl crate::Database {
         if let Some(search_term) = search {
             query = query.filter(
                 schema::events::title
-                    .ilike(format!("%{}%", search_term))
-                    .or(schema::events::description.ilike(format!("%{}%", search_term))),
+                    .ilike(format!("%{search_term}%"))
+                    .or(schema::events::description.ilike(format!("%{search_term}%"))),
             );
         }
         if let Some(last_id) = last_id {
