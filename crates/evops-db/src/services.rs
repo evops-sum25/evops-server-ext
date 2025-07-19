@@ -1,3 +1,3 @@
+mod auth;
 mod event;
 mod tag;
-mod user;
