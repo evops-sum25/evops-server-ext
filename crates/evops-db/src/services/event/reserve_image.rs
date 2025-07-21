@@ -60,11 +60,15 @@ impl crate::Database {
             current_last_position + 1
         };
         #[allow(clippy::missing_panics_doc)]
-        let max_position = evops_models::EVENT_MAX_IMAGES.try_conv::<i16>().unwrap();
+        let max_position = {
+            evops_models::EventImageIds::ITEMS_MAX
+                .try_conv::<i16>()
+                .unwrap()
+        };
         if position == max_position {
             return Err(ApiError::AlreadyExists(format!(
                 "Event {event_id} already has {} images.",
-                evops_models::EVENT_MAX_IMAGES,
+                evops_models::EventImageIds::ITEMS_MAX,
             )));
         }
 
