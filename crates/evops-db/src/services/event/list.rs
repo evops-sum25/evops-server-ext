@@ -51,7 +51,7 @@ impl crate::Database {
                     .desc()
                     .nulls_last(),
             )
-            .then_order_by(schema::events::id.asc())
+            .then_order_by(schema::events::id.desc())
             .into_boxed();
         tracing::info!(
             "Query: {}",
